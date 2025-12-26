@@ -48,9 +48,15 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Trirectangular Tetrahedron Viewer</title>
+	
+	<!-- Import Inter Font -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
 	<style>
 		/* Darker, sleek environment */
-		body { margin: 0; overflow: hidden; background-color: #222; color: #eee; font-family: sans-serif; }
+		body { margin: 0; overflow: hidden; background-color: #222; color: #eee; font-family: 'Inter', sans-serif; }
 		canvas { display: block; width: 100vw; height: 100vh; outline: none; }
 		
 		#loading {
@@ -86,18 +92,143 @@
 			border: 1px solid rgba(255,255,255,0.1);
 			transition: all 0.3s ease;
 		}
-		input[type=range] {
-			width: 300px;
-			margin-top: 10px;
-			cursor: pointer;
-			accent-color: #FF9800;
+		
+		/* Glow Effect for Snapped State */
+		.slider-container.snapped {
+			box-shadow: 0 0 25px rgba(255, 152, 0, 0.4), 0 10px 30px rgba(0,0,0,0.5);
+			border-color: rgba(255, 152, 0, 0.6);
 		}
+		
+		/* Labels Row */
+		.labels-row {
+			display: flex;
+			justify-content: space-between;
+			width: 100%;
+			margin-top: 8px; /* Changed from margin-bottom to margin-top */
+			font-size: 0.8rem;
+			color: #ccc;
+			font-weight: 400; /* Changed from bold */
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+		}
+		.label-left { text-align: left; }
+		.label-right { text-align: right; }
+		
+		/* Range Input & Ticks Styling */
+		.range-holder {
+			position: relative;
+			width: 100%;
+			height: 40px; /* Increased height for ticks */
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		
+		/* --- CUSTOM SLIDER CSS FOR PERFECT ALIGNMENT --- */
+		input[type=range] {
+			-webkit-appearance: none; /* Remove default styling */
+			width: 100%;
+			background: transparent;
+			margin: 0;
+			cursor: pointer;
+			position: relative;
+			z-index: 2;
+		}
+		
+		input[type=range]:focus {
+			outline: none;
+		}
+
+		/* Webkit Thumb (Chrome/Safari/Edge) */
+		input[type=range]::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			height: 20px; /* FIXED WIDTH */
+			width: 20px;  /* FIXED WIDTH */
+			border-radius: 50%;
+			background: #FF9800;
+			cursor: pointer;
+			margin-top: -8px; /* Offset to center on 4px track */
+			box-shadow: 0 0 5px rgba(0,0,0,0.5);
+			border: 2px solid #fff;
+		}
+
+		/* Firefox Thumb */
+		input[type=range]::-moz-range-thumb {
+			height: 20px; /* FIXED WIDTH */
+			width: 20px;  /* FIXED WIDTH */
+			border-radius: 50%;
+			background: #FF9800;
+			cursor: pointer;
+			border: 2px solid #fff;
+			box-shadow: 0 0 5px rgba(0,0,0,0.5);
+		}
+
+		/* Track Styling */
+		input[type=range]::-webkit-slider-runnable-track {
+			width: 100%;
+			height: 4px;
+			background: rgba(255, 255, 255, 0.2);
+			border-radius: 2px;
+			cursor: pointer;
+		}
+		
+		input[type=range]::-moz-range-track {
+			width: 100%;
+			height: 4px;
+			background: rgba(255, 255, 255, 0.2);
+			border-radius: 2px;
+			cursor: pointer;
+		}
+		
+		.ticks-container {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			pointer-events: none;
+			/* PADDING CALCULATION FOR PERFECT ALIGNMENT: */
+			/* Thumb Width (20px) / 2  MINUS  Tick Width (2px) / 2 */
+			/* 10px - 1px = 9px */
+			padding: 0 9px; 
+			box-sizing: border-box;
+			z-index: 1;
+		}
+		
+		.tick {
+			width: 2px;
+			height: 8px;
+			background-color: #000;
+			border: 1px solid #444;
+			transform: translateY(16px); /* Move below the thumb */
+			transition: all 0.2s ease;
+			border-radius: 2px;
+			/* Ensure tick doesn't shrink in flex */
+			flex-shrink: 0; 
+		}
+		
+		.tick.active {
+			background-color: #FF9800;
+			border-color: #FF9800;
+			box-shadow: 0 0 8px #FF9800, 0 0 12px #FF9800;
+			/* REMOVED width/height changes to prevent layout jitter */
+			/* height: 10px; */
+			/* width: 3px; */
+			
+			/* Use Scale to grow visually from center without affecting layout positions */
+			transform: translateY(16px) scale(1.5, 1.4);
+		}
+
 		/* Checkbox Styling */
 		.header-row {
 			display: flex;
 			align-items: center;
 			gap: 10px;
 			cursor: pointer;
+			margin-top: 15px; /* Changed from margin-bottom to margin-top to separate from slider */
 		}
 		input[type=checkbox] {
 			accent-color: #FF9800;
@@ -106,7 +237,7 @@
 			cursor: pointer;
 		}
 		label {
-			font-weight: bold;
+			font-weight: 400; /* Changed from bold */
 			color: #FF9800;
 			font-size: 0.9rem;
 			letter-spacing: 1px;
@@ -122,19 +253,37 @@
 	<!-- Slider Control -->
 	<div id="controls">
 		<div class="slider-container">
+			
+			<div id="sliderWrapper" style="display: none; width: 300px;">
+				<!-- 1. Text Placeholder Space -->
+				<div id="detentText" style="width: 100%; text-align: center; margin-bottom: 15px; min-height: 1.2em; font-weight: 400; color: #fff; letter-spacing: 0.5px;"></div>
+
+				<!-- 2. Slider Bar -->
+				<div class="range-holder">
+					<!-- Removed 'list' attribute to avoid native browser ticks interference -->
+					<input type="range" id="planeSlider" min="0" max="100" value="0" step="0.01">
+					<div class="ticks-container">
+						<div class="tick" data-val="0"></div>
+						<div class="tick" data-val="25"></div>
+						<div class="tick" data-val="50"></div>
+						<div class="tick" data-val="75"></div>
+						<div class="tick" data-val="100"></div>
+					</div>
+				</div>
+
+				<!-- 3. Directional Arrows -->
+				<div class="labels-row">
+					<div class="label-left">← Refinement</div>
+					<div class="label-right">Satiety Per Calorie →</div>
+				</div>
+			</div>
+
+			<!-- 4. Checkbox (Now at bottom) -->
 			<div class="header-row">
 				<input type="checkbox" id="refineCheck">
 				<label for="refineCheck">REFINEMENT</label>
 			</div>
 			
-			<div id="sliderWrapper" style="display: none; width: 100%; text-align: center;">
-				<input type="range" id="planeSlider" min="0" max="100" value="0" step="0.01" list="detents">
-			</div>
-			
-			<datalist id="detents">
-				<option value="50"></option>
-				<option value="66.666666"></option>
-			</datalist>
 		</div>
 	</div>
 	
@@ -214,7 +363,7 @@
 			const offset = s / 4; 
 			
 			// Height Factor for Dynamic Flattening
-			let heightFactor = 1.0;
+			let heightFactor = 0.5;
 
 			const vApex = new THREE.Vector3(0, 0, 0); 
 			const vLegX = new THREE.Vector3(s, 0, 0); 
@@ -373,10 +522,19 @@
 			const slider = document.getElementById('planeSlider');
 			const checkbox = document.getElementById('refineCheck');
 			const sliderWrapper = document.getElementById('sliderWrapper');
+			const sliderContainer = document.querySelector('.slider-container');
+			const ticks = document.querySelectorAll('.tick');
+			const detentText = document.getElementById('detentText');
 			let currentLocalPlanePosition = new THREE.Vector3();
 
-			// SNAP SETTINGS
-			const DETENT_VALUES = [50, 66.666666]; 
+			// EXPONENTIAL CURVE SETTINGS
+			// We want Slider(0.5) to equal T(1/3).
+			// Formula: y = x^k
+			// 1/3 = 0.5^k  =>  ln(1/3) = k * ln(0.5)  => k = ln(1/3)/ln(0.5) ≈ 1.58496
+			const EXPONENT = Math.log(1/3) / Math.log(0.5);
+			
+			// SNAP SETTINGS (Now snapping at visual 0, 25, 50, 75, 100)
+			const DETENT_VALUES = [0, 25, 50, 75, 100]; 
 			const SNAP_THRESHOLD = 2.0; 
 
 			function updateLabels(t, isRefining) {
@@ -472,6 +630,9 @@
 					mesh.geometry.computeVertexNormals();
 				});
 
+				// Scale the Bisection Plane Height to match the Tetrahedron Height
+				bisectionPlane.scale.y = heightFactor;
+
 				// REMOVED: Dynamic Face Normal Recalculation for Labels
 				// Labels will now stay in their original "Vertex Up" orientation/position.
 
@@ -483,18 +644,30 @@
 			function updatePlanePosition() {
 				let t = 0;
 				let isRefining = checkbox.checked;
+				let isSnapped = false;
+				let snappedValue = -1;
 
 				if (isRefining) {
 					// Normal Checked Logic
 					let rawValue = parseFloat(slider.value);
+					
+					// Snap Logic
 					for (let detent of DETENT_VALUES) {
 						if (Math.abs(rawValue - detent) < SNAP_THRESHOLD) {
 							rawValue = detent;
 							slider.value = rawValue; 
+							isSnapped = true;
+							snappedValue = rawValue;
 							break; 
 						}
 					}
-					t = 1.0 - (rawValue / 100);
+					
+					// CURVED MAPPING:
+					// Normalize slider 0-100 to 0.0-1.0
+					let normalizedInput = rawValue / 100;
+					
+					// Apply power curve so 0.5 becomes 0.333...
+					t = Math.pow(normalizedInput, EXPONENT);
 					
 					// Update Plane Geometry for visual plane
 					const startPos = new THREE.Vector3(0, s/2, s/2);
@@ -503,6 +676,36 @@
 					const meshPos = lerpedPos.clone().subScalar(offset);
 					bisectionPlane.position.copy(meshPos);
 					currentLocalPlanePosition.copy(meshPos);
+				}
+				
+				// Apply Snapped Visuals (Container Glow)
+				if (isSnapped) {
+					sliderContainer.classList.add('snapped');
+				} else {
+					sliderContainer.classList.remove('snapped');
+				}
+
+				// Apply Tick Glow
+				ticks.forEach(tick => {
+					if (isSnapped && parseFloat(tick.dataset.val) === snappedValue) {
+						tick.classList.add('active');
+					} else {
+						tick.classList.remove('active');
+					}
+				});
+
+				// Update Detent Text
+				if (isSnapped) {
+					switch(snappedValue) {
+						case 0: detentText.innerText = "Satiety Score 0: Oreo cookies."; break;
+						case 25: detentText.innerText = "Satiety Score 25: obesogenic diet."; break;
+						case 50: detentText.innerText = "Satiety Score 50: perfect for most."; break;
+						case 75: detentText.innerText = "Satiety Score 75: fitness model diet."; break;
+						case 100: detentText.innerText = "Satiety Score 100: rabbit starvation."; break;
+						default: detentText.innerText = "";
+					}
+				} else {
+					detentText.innerText = "";
 				}
 				
 				// Visibility Logic
@@ -549,7 +752,8 @@
 			checkbox.addEventListener('change', (e) => {
 				if (e.target.checked) {
 					sliderWrapper.style.display = 'block';
-					slider.value = 66.666666;
+					// Set default to 50 (Visual Center, which is now Physical 1/3)
+					slider.value = 50;
 				} else {
 					sliderWrapper.style.display = 'none';
 					// Do not reset slider value here, updatePlanePosition handles the t=0.333 override
@@ -559,6 +763,8 @@
 
 			slider.addEventListener('input', updatePlanePosition);
 
+			// Apply initial height factor
+			updateGeometry();
 			
 			fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_bold.typeface.json', function (font) {
 				document.getElementById('loading').style.display = 'none';
@@ -629,9 +835,9 @@
 				createLabel("fiber", "FIBER", vLegX, vLegY, 0x00E676, normalXY);   
 				
 				// INITIAL STATE:
-				// Slider logical value for "Center": 66.666666
+				// Slider at 50 (Visual Center)
 				// But checkbox is Unchecked by default
-				slider.value = 66.666666;
+				slider.value = 50;
 				updatePlanePosition();
 
 			}, undefined, function(err) {
