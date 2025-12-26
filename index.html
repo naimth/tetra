@@ -168,6 +168,9 @@
             // --- 4. Geometry Construction ---
             const s = 2.5; 
             const offset = s / 4; 
+            
+            // Height Factor for Dynamic Flattening
+            let heightFactor = 1.0;
 
             const vApex = new THREE.Vector3(0, 0, 0); 
             const vLegX = new THREE.Vector3(s, 0, 0); 
@@ -394,6 +397,41 @@
                 mesh.position.copy(localPos).add(offsetVec);
             }
 
+            // DYNAMIC GEOMETRY UPDATE (Flattening)
+            function updateGeometry() {
+                // Calculate current Apex position
+                // Moves from (0,0,0) towards (s/3, s/3, s/3) based on heightFactor
+                // At factor 1.0 -> Apex at (0,0,0)
+                // At factor 0.0 -> Apex at (s/3, s/3, s/3) (Base Center)
+                const currentApex = new THREE.Vector3().copy(vBaseCenter).multiplyScalar(1 - heightFactor);
+                
+                // Shift by global offset since meshes are shifted
+                const vertexPos = currentApex.clone().subScalar(offset);
+
+                // Update Vertices for ALL solids
+                // In createTetrahedron, Apex is always at indices 0, 3, 11 (first arg in triangle construction)
+                Object.values(solids).forEach(mesh => {
+                    if(!mesh) return;
+                    const pos = mesh.geometry.attributes.position;
+                    // Update index 0
+                    pos.setXYZ(0, vertexPos.x, vertexPos.y, vertexPos.z);
+                    // Update index 3
+                    pos.setXYZ(3, vertexPos.x, vertexPos.y, vertexPos.z);
+                    // Update index 11
+                    pos.setXYZ(11, vertexPos.x, vertexPos.y, vertexPos.z);
+                    
+                    pos.needsUpdate = true;
+                    mesh.geometry.computeVertexNormals();
+                });
+
+                // REMOVED: Dynamic Face Normal Recalculation for Labels
+                // Labels will now stay in their original "Vertex Up" orientation/position.
+
+                // Refresh Plane/Labels (Plane position might need update if logic depended on geometry, 
+                // but currently plane moves based on slider t along fixed start/end vectors).
+                updatePlanePosition();
+            }
+
             function updatePlanePosition() {
                 let t = 0;
                 let isRefining = checkbox.checked;
@@ -521,7 +559,7 @@
                         mesh: textMesh,
                         baseQuat: baseQuat,
                         dist: dist,
-                        faceNormal: faceNormal 
+                        faceNormal: faceNormal.clone() // Store CLONE so we can update it
                     };
                     
                     updateLabelPos(labelMeshes[key], pStart, pEnd, 0.5);
@@ -560,6 +598,9 @@
             controls.dampingFactor = 0.05;
             controls.enableKeys = false;
             
+            // Disable Panning
+            controls.enablePan = false;
+
             controls.maxPolarAngle = Math.PI / 2 + 0.2; 
 
             // ZOOM LIMITS
@@ -568,7 +609,20 @@
 
             const keyState = {};
 
-            window.addEventListener('keydown', (e) => { keyState[e.code] = true; });
+            window.addEventListener('keydown', (e) => { 
+                keyState[e.code] = true; 
+                
+                // Height Control Logic
+                // Increased step size from 0.02 to 0.1 (5x faster)
+                if (e.code === 'ArrowUp') {
+                    heightFactor = Math.min(1.0, heightFactor + 0.1);
+                    updateGeometry();
+                }
+                if (e.code === 'ArrowDown') {
+                    heightFactor = Math.max(0.01, heightFactor - 0.1);
+                    updateGeometry();
+                }
+            });
             window.addEventListener('keyup', (e) => { keyState[e.code] = false; });
 
             function animate() {
@@ -578,8 +632,7 @@
                 const rotSpeed = 0.05;
                 if (keyState.ArrowLeft)  rotateOnAxis(pivotGroup, new THREE.Vector3(0, 1, 0), -rotSpeed);
                 if (keyState.ArrowRight) rotateOnAxis(pivotGroup, new THREE.Vector3(0, 1, 0), rotSpeed);
-                if (keyState.ArrowUp)    rotateOnAxis(pivotGroup, new THREE.Vector3(1, 0, 0), -rotSpeed);
-                if (keyState.ArrowDown)  rotateOnAxis(pivotGroup, new THREE.Vector3(1, 0, 0), rotSpeed);
+                // Removed Up/Down rotation logic to allow Height Control
 
                 // --- CAMERA-DEPENDENT TILT ---
                 const polarAngle = controls.getPolarAngle();
