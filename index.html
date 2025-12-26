@@ -1,483 +1,630 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Trirectangular Tetrahedron Viewer</title>
-	<style>
-		/* Darker, sleek environment */
-		body { margin: 0; overflow: hidden; background-color: #222; color: #eee; font-family: sans-serif; }
-		canvas { display: block; width: 100vw; height: 100vh; outline: none; }
-		
-		#loading {
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
-			font-size: 1.5em;
-			pointer-events: none;
-			transition: opacity 0.5s;
-			color: #fff;
-		}
-		/* Slider Controls */
-		#controls {
-			position: absolute;
-			bottom: 30px;
-			width: 100%;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			pointer-events: auto; 
-			z-index: 10;
-		}
-		.slider-container {
-			background: rgba(30, 30, 30, 0.8);
-			padding: 15px 30px;
-			border-radius: 30px;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			backdrop-filter: blur(10px);
-			box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-			border: 1px solid rgba(255,255,255,0.1);
-		}
-		input[type=range] {
-			width: 300px;
-			margin-top: 10px;
-			cursor: pointer;
-			accent-color: #FF9800;
-		}
-		label {
-			font-weight: bold;
-			color: #FF9800;
-			font-size: 0.9rem;
-			letter-spacing: 1px;
-			text-transform: uppercase;
-		}
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trirectangular Tetrahedron Viewer</title>
+    <style>
+        /* Darker, sleek environment */
+        body { margin: 0; overflow: hidden; background-color: #222; color: #eee; font-family: sans-serif; }
+        canvas { display: block; width: 100vw; height: 100vh; outline: none; }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5em;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            color: #fff;
+        }
+        /* Slider Controls */
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto; 
+            z-index: 10;
+        }
+        .slider-container {
+            background: rgba(30, 30, 30, 0.8);
+            padding: 15px 30px;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+        input[type=range] {
+            width: 300px;
+            margin-top: 10px;
+            cursor: pointer;
+            accent-color: #FF9800;
+        }
+        /* Checkbox Styling */
+        .header-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        input[type=checkbox] {
+            accent-color: #FF9800;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        label {
+            font-weight: bold;
+            color: #FF9800;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-	
-	<div id="loading">Loading Assets...</div>
-
-	<!-- Slider Control -->
-	<div id="controls">
-		<div class="slider-container">
-			<label for="planeSlider">REFINEMENT</label>
-			<input type="range" id="planeSlider" min="0" max="100" value="0">
-		</div>
-	</div>
-	
-	<!-- Three.js Library -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-	<!-- OrbitControls -->
-	<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-	<!-- FontLoader & TextGeometry -->
-	<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
-
-	<script>
-		(function() {
-			// --- 0. Cleanup Logic ---
-			const existingCanvas = document.querySelector('canvas');
-			if (existingCanvas) existingCanvas.remove();
-
-			// --- 1. Scene Setup ---
-			const scene = new THREE.Scene();
-			const bgColor = 0x222222; 
-			scene.background = new THREE.Color(bgColor);
-			scene.fog = new THREE.Fog(bgColor, 15, 40);
-
-			const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-			camera.position.set(6, 5, 8); 
-
-			const renderer = new THREE.WebGLRenderer({ antialias: true });
-			renderer.localClippingEnabled = true; 
-			renderer.shadowMap.enabled = true; 
-			renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
-			renderer.setSize(window.innerWidth, window.innerHeight);
-			renderer.setPixelRatio(window.devicePixelRatio);
-			
-			renderer.domElement.setAttribute('tabindex', '0');
-			renderer.domElement.style.outline = 'none'; 
-			document.body.appendChild(renderer.domElement);
-			renderer.domElement.focus();
-			renderer.domElement.addEventListener('click', () => renderer.domElement.focus());
-			renderer.domElement.addEventListener('mouseover', () => renderer.domElement.focus());
-
-			// --- 2. Lighting ---
-			const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
-			hemiLight.position.set(0, 20, 0);
-			scene.add(hemiLight);
-
-			const spotLight = new THREE.SpotLight(0xffffff, 1.2);
-			spotLight.position.set(0, 20, 0); 
-			spotLight.angle = Math.PI / 6;
-			spotLight.penumbra = 1.0; 
-			spotLight.decay = 2;
-			spotLight.distance = 100;
-			spotLight.castShadow = true;
-			spotLight.shadow.mapSize.width = 1024; 
-			spotLight.shadow.mapSize.height = 1024;
-			spotLight.shadow.bias = -0.0001;
-			spotLight.shadow.radius = 5; 
-			scene.add(spotLight);
-
-			const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
-			rimLight.position.set(-5, 5, -5);
-			scene.add(rimLight);
-
-			const floorGeom = new THREE.PlaneGeometry(1000, 1000);
-			const floorMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 1, metalness: 0 });
-			const floor = new THREE.Mesh(floorGeom, floorMat);
-			floor.rotation.x = -Math.PI / 2;
-			floor.position.y = -2.5;
-			floor.receiveShadow = true; 
-			scene.add(floor);
-
-
-			// --- 3. Asset Loading ---
-			const fontLoader = new THREE.FontLoader();
-
-			// --- 4. Geometry Construction ---
-			const s = 2.5; 
-			const offset = s / 4; 
-
-			const vApex = new THREE.Vector3(0, 0, 0); 
-			const vLegX = new THREE.Vector3(s, 0, 0); 
-			const vLegY = new THREE.Vector3(0, s, 0); 
-			const vLegZ = new THREE.Vector3(0, 0, s); 
-			const vBaseCenter = new THREE.Vector3(s/3, s/3, s/3); 
-
-			const globalPlaneTip = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-			const globalPlaneBase = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
-
-			// Added 'opacity' parameter (defaults to 0.85)
-			function createTetrahedron(pApex, pLeg1, pLeg2, pBase, colorHex, clippingPlanesArray, opacity = 0.85) {
-				const geom = new THREE.BufferGeometry();
-				const vertices = [
-					pApex.x, pApex.y, pApex.z,  pLeg1.x, pLeg1.y, pLeg1.z,  pLeg2.x, pLeg2.y, pLeg2.z,
-					pApex.x, pApex.y, pApex.z,  pBase.x, pBase.y, pBase.z,  pLeg1.x, pLeg1.y, pLeg1.z,
-					pLeg1.x, pLeg1.y, pLeg1.z,  pBase.x, pBase.y, pBase.z,  pLeg2.x, pLeg2.y, pLeg2.z,
-					pLeg2.x, pLeg2.y, pLeg2.z,  pBase.x, pBase.y, pBase.z,  pApex.x, pApex.y, pApex.z
-				];
-
-				geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
-				geom.computeVertexNormals();
-				geom.translate(-offset, -offset, -offset);
-
-				const material = new THREE.MeshStandardMaterial({ 
-					color: colorHex, 
-					roughness: 0.2, 
-					metalness: 0.2, 
-					flatShading: true,
-					side: THREE.DoubleSide,
-					clippingPlanes: clippingPlanesArray || [], 
-					clipShadows: true,
-					transparent: true,
-					opacity: opacity, // Use the passed opacity
-					depthWrite: true 
-				});
-				
-				const mesh = new THREE.Mesh(geom, material);
-				mesh.castShadow = true; 
-				
-				// Re-enabled receiveShadow for self-shadowing depth
-				mesh.receiveShadow = true; 
-				
-				return mesh;
-			}
-
-			const pivotGroup = new THREE.Group();
-			scene.add(pivotGroup);
-
-			// Construct Parts
-			
-			// PROTEIN: Lowered opacity to 0.35 (to compensate for self-shadowing darkness)
-			const meshProtein = createTetrahedron(vApex, vLegY, vLegZ, vBaseCenter, 0x2962FF, [], 0.35); 
-			
-			// OTHERS: Standard opacity 0.85
-			const meshFatTip = createTetrahedron(vApex, vLegX, vLegY, vBaseCenter, 0xFFD600, [globalPlaneTip], 0.85); 
-			const meshFatBase = createTetrahedron(vApex, vLegX, vLegY, vBaseCenter, 0x40C4FF, [globalPlaneBase], 0.85); 
-			const meshCarbsTip = createTetrahedron(vApex, vLegZ, vLegX, vBaseCenter, 0xFF1744, [globalPlaneTip], 0.85); 
-			const meshCarbsBase = createTetrahedron(vApex, vLegZ, vLegX, vBaseCenter, 0x00E676, [globalPlaneBase], 0.85); 
-
-			pivotGroup.add(meshProtein);
-			pivotGroup.add(meshFatTip);
-			pivotGroup.add(meshFatBase);
-			pivotGroup.add(meshCarbsTip);
-			pivotGroup.add(meshCarbsBase);
-
-			// Orient Vertex Up
-			const cornerDirection = new THREE.Vector3(-1, -1, -1).normalize();
-			const upDirection = new THREE.Vector3(0, 1, 0);
-			pivotGroup.quaternion.setFromUnitVectors(cornerDirection, upDirection);
-
-
-			// --- 5. Bisection Plane Mesh ---
-			const planeWidth = s * Math.sqrt(2);
-			const planeHeight = s / Math.sqrt(3);
-			const planeGeom = new THREE.PlaneGeometry(planeWidth, planeHeight); 
-			planeGeom.translate(0, planeHeight / 2, 0); 
-
-			const planeMat = new THREE.MeshBasicMaterial({ 
-				color: 0xffffff, 
-				side: THREE.DoubleSide, 
-				transparent: true, 
-				opacity: 0.15, 
-				depthWrite: false, 
-			});
-			const bisectionPlane = new THREE.Mesh(planeGeom, planeMat);
-			bisectionPlane.raycast = function() {}; 
-
-			const borderGeom = new THREE.EdgesGeometry(planeGeom);
-			const borderMat = new THREE.LineBasicMaterial({ color: 0xFF9800, transparent: true, opacity: 0.8 });
-			const border = new THREE.LineSegments(borderGeom, borderMat);
-			border.raycast = function() {}; 
-			bisectionPlane.add(border);
-
-			bisectionPlane.renderOrder = 999;
-			pivotGroup.add(bisectionPlane);
-
-			const localUp = new THREE.Vector3(-1, -1, -1).normalize(); 
-			const localNormal = new THREE.Vector3(2, -1, -1).normalize();
-			const localRight = new THREE.Vector3().crossVectors(localUp, localNormal).normalize();
-			const correctedUp = new THREE.Vector3().crossVectors(localNormal, localRight).normalize();
-			const planeMatrix = new THREE.Matrix4();
-			planeMatrix.makeBasis(localRight, correctedUp, localNormal);
-			bisectionPlane.rotation.setFromRotationMatrix(planeMatrix);
-
-			
-			// --- 6. 3D Text Legends & Update Logic ---
-			
-			const labelMeshes = {
-				fat: null,
-				water: null,
-				carbs: null,
-				fiber: null,
-				protein: null
-			};
-
-			const slider = document.getElementById('planeSlider');
-			let currentLocalPlanePosition = new THREE.Vector3();
-
-			function updateLabels(t) {
-				if (!labelMeshes.fat) return;
-
-				const showBase = (t > 0.02);
-				const showTip = (t < 0.98);
-
-				// FAT Label (Tip)
-				const fatT = (t + 1) / 2;
-				updateLabelPos(labelMeshes.fat, vLegY, vLegX, fatT);
-				labelMeshes.fat.mesh.visible = showTip;
-
-				// WATER Label (Base)
-				const waterT = t / 2;
-				updateLabelPos(labelMeshes.water, vLegY, vLegX, waterT);
-				labelMeshes.water.mesh.visible = showBase;
-
-				// CARBS Label (Tip)
-				const carbsT = (t + 1) / 2;
-				updateLabelPos(labelMeshes.carbs, vLegZ, vLegX, carbsT);
-				labelMeshes.carbs.mesh.visible = showTip;
-
-				// FIBER Label (Base)
-				const fiberT = t / 2;
-				updateLabelPos(labelMeshes.fiber, vLegZ, vLegX, fiberT);
-				labelMeshes.fiber.mesh.visible = showBase;
-			}
-
-			// Updated to use CONSTANT FACE NORMAL for offset
-			function updateLabelPos(item, start, end, alpha) {
-				const mesh = item.mesh;
-				const mid = new THREE.Vector3().lerpVectors(start, end, alpha);
-				const localPos = mid.clone().subScalar(offset); 
-				
-				// FIX: Use the stored constant Face Normal for offset
-				// This ensures the offset direction doesn't change as we slide along the edge,
-				// keeping the text perfectly parallel to the edge.
-				const offsetVec = item.faceNormal.clone().multiplyScalar(item.dist || 0.2);
-				
-				mesh.position.copy(localPos).add(offsetVec);
-			}
-
-			function updatePlanePosition() {
-				const t = parseInt(slider.value) / 100;
-				
-				const startPos = new THREE.Vector3(0, s/2, s/2);
-				const endPos = new THREE.Vector3(s, 0, 0);
-				const lerpedPos = new THREE.Vector3().lerpVectors(startPos, endPos, t);
-				const meshPos = lerpedPos.clone().subScalar(offset);
-				bisectionPlane.position.copy(meshPos);
-				currentLocalPlanePosition.copy(meshPos);
-
-				// Plane Visibility
-				bisectionPlane.visible = (t > 0.01 && t < 0.99);
-
-				updateLabels(t);
-			}
-
-			slider.addEventListener('input', updatePlanePosition);
-
-			
-			fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_bold.typeface.json', function (font) {
-				document.getElementById('loading').style.display = 'none';
-
-				// Added 'faceNormal' parameter
-				function createLabel(key, text, pStart, pEnd, colorHex, faceNormal, dist = 0.2) {
-					const textGeo = new THREE.TextGeometry(text, {
-						font: font,
-						size: 0.25,
-						height: 0.05,
-						curveSegments: 12,
-					});
-					textGeo.center();
-					
-					const textMat = new THREE.MeshStandardMaterial({ 
-						color: colorHex, 
-						roughness: 0.2, 
-						metalness: 0.2, 
-						transparent: true,
-						opacity: 0.85, 
-						depthWrite: true,
-						side: THREE.DoubleSide
-					});
-
-					const textMesh = new THREE.Mesh(textGeo, textMat);
-					textMesh.castShadow = true;
-					textMesh.receiveShadow = true;
-
-					// --- ORIENTATION (Local Basis) ---
-					// 1. Edge Vector (Local X) - Reversed for reading
-					const edgeLocal = new THREE.Vector3().subVectors(pStart, pEnd).normalize();
-					
-					// 2. True Vertical Up (Local Y)
-					const trueUp = new THREE.Vector3(-1, -1, -1).normalize();
-					
-					// 3. Outward/Forward (Local Z) - Perpendicular to Edge and Up
-					const forwardLocal = new THREE.Vector3().crossVectors(edgeLocal, trueUp).normalize();
-					
-					// Check polarity using Face Normal (ensure forward roughly matches face normal)
-					if (forwardLocal.dot(faceNormal) < 0) {
-						forwardLocal.negate();
-					}
-					
-					const rightLocal = new THREE.Vector3().crossVectors(trueUp, forwardLocal).normalize();
-
-					const baseMat = new THREE.Matrix4();
-					baseMat.makeBasis(rightLocal, trueUp, forwardLocal);
-					const baseQuat = new THREE.Quaternion().setFromRotationMatrix(baseMat);
-
-					pivotGroup.add(textMesh);
-					
-					labelMeshes[key] = {
-						mesh: textMesh,
-						baseQuat: baseQuat,
-						dist: dist,
-						faceNormal: faceNormal // Store for position updates
-					};
-					
-					// Initial Position
-					updateLabelPos(labelMeshes[key], pStart, pEnd, 0.5);
-				}
-
-				// Define Constant Face Normals (Pre-shift coordinates)
-				const normalYZ = new THREE.Vector3(-1, 0, 0); // Protein Face (x=0)
-				const normalXY = new THREE.Vector3(0, 0, -1); // Fat/Water Face (z=0)
-				const normalZX = new THREE.Vector3(0, -1, 0); // Carbs/Fiber Face (y=0)
-
-				// Create Static Label
-				createLabel("protein", "PROTEIN", vLegY, vLegZ, 0x2962FF, normalYZ, 0.2); 
-
-				// Create Dynamic Labels
-				// Fat/Water on XY Face (Normal Z-)
-				createLabel("fat", "FAT", vLegX, vLegY, 0xFFD600, normalXY);       
-				createLabel("water", "WATER", vLegX, vLegY, 0x40C4FF, normalXY);   
-				
-				// Carbs/Fiber on ZX Face (Normal Y-)
-				createLabel("carbs", "CARBS", vLegZ, vLegX, 0xFF1744, normalZX);   
-				createLabel("fiber", "FIBER", vLegZ, vLegX, 0x00E676, normalZX);   
-
-				// Trigger initial update
-				updatePlanePosition();
-
-			}, undefined, function(err) {
-				console.error("Font error", err);
-				document.getElementById('loading').innerText = "Error loading font";
-			});
-
-
-			// --- 7. Controls & Loop ---
-			const controls = new THREE.OrbitControls(camera, renderer.domElement);
-			controls.enableDamping = true;
-			controls.dampingFactor = 0.05;
-			controls.enableKeys = false;
-			controls.maxPolarAngle = Math.PI / 2 - 0.05; 
-
-			const keyState = {};
-
-			window.addEventListener('keydown', (e) => { keyState[e.code] = true; });
-			window.addEventListener('keyup', (e) => { keyState[e.code] = false; });
-
-			function animate() {
-				if (!document.body.contains(renderer.domElement)) return;
-				requestAnimationFrame(animate);
-
-				const rotSpeed = 0.05;
-				if (keyState.ArrowLeft)  rotateOnAxis(pivotGroup, new THREE.Vector3(0, 1, 0), -rotSpeed);
-				if (keyState.ArrowRight) rotateOnAxis(pivotGroup, new THREE.Vector3(0, 1, 0), rotSpeed);
-				if (keyState.ArrowUp)    rotateOnAxis(pivotGroup, new THREE.Vector3(1, 0, 0), -rotSpeed);
-				if (keyState.ArrowDown)  rotateOnAxis(pivotGroup, new THREE.Vector3(1, 0, 0), rotSpeed);
-
-				// --- CAMERA-DEPENDENT TILT ---
-				const polarAngle = controls.getPolarAngle();
-				
-				// Tilt Range: 0 (Horizon) -> 90 (Top)
-				let tiltAngle = (Math.PI / 2) - polarAngle;
-				tiltAngle = Math.max(0, Math.min(Math.PI/2, tiltAngle));
-
-				// Create rotation quaternion (Around Local X / Edge Axis)
-				const tiltQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -tiltAngle);
-
-				// Apply to all labels
-				Object.values(labelMeshes).forEach(item => {
-					if (item && item.mesh && item.mesh.visible) {
-						// Reset to base orientation relative to object, then add tilt
-						item.mesh.quaternion.copy(item.baseQuat).multiply(tiltQuat);
-					}
-				});
-
-
-				// --- CLIPPING PLANE UPDATE ---
-				const normalLocal = new THREE.Vector3(2, -1, -1).normalize();
-				const pointLocal = currentLocalPlanePosition.clone();
-
-				const pointWorld = pointLocal.clone().applyMatrix4(pivotGroup.matrixWorld);
-				const normalWorld = normalLocal.clone().transformDirection(pivotGroup.matrixWorld).normalize();
-
-				globalPlaneTip.setFromNormalAndCoplanarPoint(normalWorld, pointWorld);
-				const normalWorldNeg = normalWorld.clone().negate();
-				globalPlaneBase.setFromNormalAndCoplanarPoint(normalWorldNeg, pointWorld);
-
-				controls.update();
-				renderer.render(scene, camera);
-			}
-
-			function rotateOnAxis(object, axis, angle) {
-				const q = new THREE.Quaternion();
-				q.setFromAxisAngle(axis, angle);
-				object.quaternion.premultiply(q);
-			}
-
-			window.addEventListener('resize', () => {
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-				renderer.setSize(window.innerWidth, window.innerHeight);
-			});
-
-			animate();
-		})();
-	</script>
+    
+    <div id="loading">Loading Assets...</div>
+
+    <!-- Slider Control -->
+    <div id="controls">
+        <div class="slider-container">
+            <div class="header-row">
+                <input type="checkbox" id="refineCheck">
+                <label for="refineCheck">REFINEMENT</label>
+            </div>
+            
+            <div id="sliderWrapper" style="display: none; width: 100%; text-align: center;">
+                <input type="range" id="planeSlider" min="0" max="100" value="0" step="0.01" list="detents">
+            </div>
+            
+            <datalist id="detents">
+                <option value="50"></option>
+                <option value="66.666666"></option>
+            </datalist>
+        </div>
+    </div>
+    
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- FontLoader & TextGeometry -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
+
+    <script>
+        (function() {
+            // --- 0. Cleanup Logic ---
+            const existingCanvas = document.querySelector('canvas');
+            if (existingCanvas) existingCanvas.remove();
+
+            // --- 1. Scene Setup ---
+            const scene = new THREE.Scene();
+            const bgColor = 0x222222; 
+            scene.background = new THREE.Color(bgColor);
+            scene.fog = new THREE.Fog(bgColor, 15, 40);
+
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(6, 5, 8); 
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.localClippingEnabled = true; 
+            renderer.shadowMap.enabled = true; 
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            renderer.domElement.setAttribute('tabindex', '0');
+            renderer.domElement.style.outline = 'none'; 
+            document.body.appendChild(renderer.domElement);
+            renderer.domElement.focus();
+            renderer.domElement.addEventListener('click', () => renderer.domElement.focus());
+            renderer.domElement.addEventListener('mouseover', () => renderer.domElement.focus());
+
+            // --- 2. Lighting ---
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+            hemiLight.position.set(0, 20, 0);
+            scene.add(hemiLight);
+
+            const spotLight = new THREE.SpotLight(0xffffff, 1.2);
+            spotLight.position.set(0, 20, 0); 
+            spotLight.angle = Math.PI / 6;
+            spotLight.penumbra = 1.0; 
+            spotLight.decay = 2;
+            spotLight.distance = 100;
+            spotLight.castShadow = true;
+            spotLight.shadow.mapSize.width = 1024; 
+            spotLight.shadow.mapSize.height = 1024;
+            spotLight.shadow.bias = -0.0001;
+            spotLight.shadow.radius = 5; 
+            scene.add(spotLight);
+
+            const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            rimLight.position.set(-5, 5, -5);
+            scene.add(rimLight);
+
+            const floorGeom = new THREE.PlaneGeometry(1000, 1000);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 1, metalness: 0 });
+            const floor = new THREE.Mesh(floorGeom, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -4.5; 
+            floor.receiveShadow = true; 
+            scene.add(floor);
+
+
+            // --- 3. Asset Loading ---
+            const fontLoader = new THREE.FontLoader();
+
+            // --- 4. Geometry Construction ---
+            const s = 2.5; 
+            const offset = s / 4; 
+
+            const vApex = new THREE.Vector3(0, 0, 0); 
+            const vLegX = new THREE.Vector3(s, 0, 0); 
+            const vLegY = new THREE.Vector3(0, s, 0); 
+            const vLegZ = new THREE.Vector3(0, 0, s); 
+            const vBaseCenter = new THREE.Vector3(s/3, s/3, s/3); 
+            
+            // New Midpoint for Mega Solids (Midpoint of Y-Z edge)
+            const vMidYZ = new THREE.Vector3(0, s/2, s/2);
+
+            const globalPlaneTip = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const globalPlaneBase = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+
+            function createTetrahedron(pApex, pLeg1, pLeg2, pBase, colorHex, clippingPlanesArray, opacity = 0.85) {
+                const geom = new THREE.BufferGeometry();
+                const vertices = [
+                    pApex.x, pApex.y, pApex.z,  pLeg1.x, pLeg1.y, pLeg1.z,  pLeg2.x, pLeg2.y, pLeg2.z,
+                    pApex.x, pApex.y, pApex.z,  pBase.x, pBase.y, pBase.z,  pLeg1.x, pLeg1.y, pLeg1.z,
+                    pLeg1.x, pLeg1.y, pLeg1.z,  pBase.x, pBase.y, pBase.z,  pLeg2.x, pLeg2.y, pLeg2.z,
+                    pLeg2.x, pLeg2.y, pLeg2.z,  pBase.x, pBase.y, pBase.z,  pApex.x, pApex.y, pApex.z
+                ];
+
+                geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+                geom.computeVertexNormals();
+                geom.translate(-offset, -offset, -offset);
+
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: colorHex, 
+                    roughness: 0.2, 
+                    metalness: 0.2, 
+                    flatShading: true,
+                    side: THREE.DoubleSide,
+                    clippingPlanes: clippingPlanesArray || [], 
+                    clipShadows: true,
+                    transparent: true,
+                    opacity: opacity, 
+                    depthWrite: true 
+                });
+                
+                const mesh = new THREE.Mesh(geom, material);
+                mesh.castShadow = true; 
+                mesh.receiveShadow = true; 
+                return mesh;
+            }
+
+            const pivotGroup = new THREE.Group();
+            scene.add(pivotGroup);
+
+            // Store mesh references
+            const solids = {
+                // Refinement Mode Solids (5-Part Logic)
+                protein: null,
+                fatTip: null,
+                fatBase: null,
+                carbsTip: null,
+                carbsBase: null,
+                
+                // Classic Mode Solids (3-Part Logic, 1/3 each)
+                classicProtein: null,
+                classicFat: null,
+                classicCarbs: null
+            };
+
+            // --- CONSTRUCT REFINEMENT PARTS (The "Mega" Solids for Slider Logic) ---
+            
+            // PROTEIN (Clipped by base plane)
+            solids.protein = createTetrahedron(vApex, vLegY, vLegZ, vBaseCenter, 0x2962FF, [globalPlaneBase], 0.35); 
+            
+            // FAT (Tip extends to mid-YZ, Base is normal)
+            solids.fatTip = createTetrahedron(vApex, vLegZ, vLegX, vMidYZ, 0xFFD600, [globalPlaneTip], 0.85); 
+            solids.fatBase = createTetrahedron(vApex, vLegZ, vLegX, vBaseCenter, 0x40C4FF, [globalPlaneBase], 0.85); 
+
+            // CARBS (Tip extends to mid-YZ, Base is normal)
+            solids.carbsTip = createTetrahedron(vApex, vLegX, vLegY, vMidYZ, 0xFF1744, [globalPlaneTip], 0.85); 
+            solids.carbsBase = createTetrahedron(vApex, vLegX, vLegY, vBaseCenter, 0x00E676, [globalPlaneBase], 0.85); 
+
+            // --- CONSTRUCT CLASSIC PARTS (Standard 1/3 Split) ---
+            // These use vBaseCenter as the meeting point for all three
+            
+            // Classic Protein (Blue)
+            solids.classicProtein = createTetrahedron(vApex, vLegY, vLegZ, vBaseCenter, 0x2962FF, [], 0.35);
+            
+            // Classic Fat (Yellow)
+            solids.classicFat = createTetrahedron(vApex, vLegZ, vLegX, vBaseCenter, 0xFFD600, [], 0.85);
+            
+            // Classic Carbs (Red)
+            solids.classicCarbs = createTetrahedron(vApex, vLegX, vLegY, vBaseCenter, 0xFF1744, [], 0.85);
+
+
+            // Add all to scene
+            pivotGroup.add(solids.protein);
+            pivotGroup.add(solids.fatTip);
+            pivotGroup.add(solids.fatBase);
+            pivotGroup.add(solids.carbsTip);
+            pivotGroup.add(solids.carbsBase);
+            
+            pivotGroup.add(solids.classicProtein);
+            pivotGroup.add(solids.classicFat);
+            pivotGroup.add(solids.classicCarbs);
+
+            // Orient Vertex Up
+            const cornerDirection = new THREE.Vector3(-1, -1, -1).normalize();
+            const upDirection = new THREE.Vector3(0, 1, 0);
+            pivotGroup.quaternion.setFromUnitVectors(cornerDirection, upDirection);
+
+
+            // --- 5. Bisection Plane Mesh ---
+            const planeWidth = s * Math.sqrt(2);
+            const planeHeight = s / Math.sqrt(3);
+            const planeGeom = new THREE.PlaneGeometry(planeWidth, planeHeight); 
+            planeGeom.translate(0, planeHeight / 2, 0); 
+
+            const planeMat = new THREE.MeshBasicMaterial({ 
+                color: 0xffffff, 
+                side: THREE.DoubleSide, 
+                transparent: true, 
+                opacity: 0.15, 
+                depthWrite: false, 
+            });
+            const bisectionPlane = new THREE.Mesh(planeGeom, planeMat);
+            bisectionPlane.raycast = function() {}; 
+
+            const borderGeom = new THREE.EdgesGeometry(planeGeom);
+            const borderMat = new THREE.LineBasicMaterial({ color: 0xFF9800, transparent: true, opacity: 0.8 });
+            const border = new THREE.LineSegments(borderGeom, borderMat);
+            border.raycast = function() {}; 
+            bisectionPlane.add(border);
+
+            bisectionPlane.renderOrder = 999;
+            pivotGroup.add(bisectionPlane);
+
+            const localUp = new THREE.Vector3(-1, -1, -1).normalize(); 
+            const localNormal = new THREE.Vector3(2, -1, -1).normalize();
+            const localRight = new THREE.Vector3().crossVectors(localUp, localNormal).normalize();
+            const correctedUp = new THREE.Vector3().crossVectors(localNormal, localRight).normalize();
+            const planeMatrix = new THREE.Matrix4();
+            planeMatrix.makeBasis(localRight, correctedUp, localNormal);
+            bisectionPlane.rotation.setFromRotationMatrix(planeMatrix);
+
+            
+            // --- 6. 3D Text Legends & Update Logic ---
+            
+            const labelMeshes = {
+                fat: null,
+                water: null,
+                carbs: null,
+                fiber: null,
+                protein: null,
+                hedonic: null // Added Hedonic
+            };
+
+            const slider = document.getElementById('planeSlider');
+            const checkbox = document.getElementById('refineCheck');
+            const sliderWrapper = document.getElementById('sliderWrapper');
+            let currentLocalPlanePosition = new THREE.Vector3();
+
+            // SNAP SETTINGS
+            const DETENT_VALUES = [50, 66.666666]; 
+            const SNAP_THRESHOLD = 2.0; 
+
+            function updateLabels(t, isRefining) {
+                if (!labelMeshes.fat) return;
+
+                // If not refining (Unchecked), show only core macros
+                if (!isRefining) {
+                    labelMeshes.fat.mesh.visible = true;
+                    labelMeshes.carbs.mesh.visible = true;
+                    labelMeshes.protein.mesh.visible = true;
+                    
+                    labelMeshes.water.mesh.visible = false;
+                    labelMeshes.fiber.mesh.visible = false;
+                    if (labelMeshes.hedonic) labelMeshes.hedonic.mesh.visible = false; // Hide Hedonic
+                    
+                    // Position labels at "Classic" locations
+                    updateLabelPos(labelMeshes.fat, vLegZ, vLegX, 0.5);
+                    updateLabelPos(labelMeshes.carbs, vLegY, vLegX, 0.5);
+                    
+                    return;
+                }
+
+                // Normal logic when refining
+                const showBase = (t > 0.02);
+                const showTip = (t < 0.98);
+
+                // FAT Label (Tip)
+                const fatT = (t + 1) / 2;
+                updateLabelPos(labelMeshes.fat, vLegZ, vLegX, fatT);
+                labelMeshes.fat.mesh.visible = showTip;
+
+                // WATER Label (Base)
+                const waterT = t / 2;
+                updateLabelPos(labelMeshes.water, vLegZ, vLegX, waterT);
+                labelMeshes.water.mesh.visible = showBase;
+
+                // CARBS Label (Tip)
+                const carbsT = (t + 1) / 2;
+                updateLabelPos(labelMeshes.carbs, vLegY, vLegX, carbsT);
+                labelMeshes.carbs.mesh.visible = showTip;
+
+                // FIBER Label (Base)
+                const fiberT = t / 2;
+                updateLabelPos(labelMeshes.fiber, vLegY, vLegX, fiberT);
+                labelMeshes.fiber.mesh.visible = showBase;
+
+                // PROTEIN / HEDONIC Label Visibility
+                // If Protein solid is gone (t=0, showBase=false), show HEDONIC
+                if (labelMeshes.protein) {
+                    labelMeshes.protein.mesh.visible = showBase;
+                }
+                if (labelMeshes.hedonic) {
+                    // Show Hedonic ONLY if Protein is hidden (slider at max) AND we are refining
+                    labelMeshes.hedonic.mesh.visible = !showBase;
+                }
+            }
+
+            function updateLabelPos(item, start, end, alpha) {
+                const mesh = item.mesh;
+                const mid = new THREE.Vector3().lerpVectors(start, end, alpha);
+                const localPos = mid.clone().subScalar(offset); 
+                
+                const dist = item.dist || 0.2;
+                const offsetVec = item.faceNormal.clone().multiplyScalar(dist);
+                
+                mesh.position.copy(localPos).add(offsetVec);
+            }
+
+            function updatePlanePosition() {
+                let t = 0;
+                let isRefining = checkbox.checked;
+
+                if (isRefining) {
+                    // Normal Checked Logic
+                    let rawValue = parseFloat(slider.value);
+                    for (let detent of DETENT_VALUES) {
+                        if (Math.abs(rawValue - detent) < SNAP_THRESHOLD) {
+                            rawValue = detent;
+                            slider.value = rawValue; 
+                            break; 
+                        }
+                    }
+                    t = 1.0 - (rawValue / 100);
+                    
+                    // Update Plane Geometry for visual plane
+                    const startPos = new THREE.Vector3(0, s/2, s/2);
+                    const endPos = new THREE.Vector3(s, 0, 0);
+                    const lerpedPos = new THREE.Vector3().lerpVectors(startPos, endPos, t);
+                    const meshPos = lerpedPos.clone().subScalar(offset);
+                    bisectionPlane.position.copy(meshPos);
+                    currentLocalPlanePosition.copy(meshPos);
+                }
+                
+                // Visibility Logic
+                if (!isRefining) {
+                    // UNCHECKED STATE (Classic Mode)
+                    bisectionPlane.visible = false;
+                    
+                    // Hide Refinement Solids
+                    solids.fatTip.visible = false;
+                    solids.fatBase.visible = false;
+                    solids.carbsTip.visible = false;
+                    solids.carbsBase.visible = false;
+                    solids.protein.visible = false; 
+                    
+                    // Show Classic Solids
+                    solids.classicFat.visible = true;
+                    solids.classicCarbs.visible = true;
+                    solids.classicProtein.visible = true;
+                    
+                } else {
+                    // CHECKED STATE (Refinement Mode)
+                    bisectionPlane.visible = (t > 0.01 && t < 0.99);
+                    
+                    // Hide Classic Solids
+                    solids.classicFat.visible = false;
+                    solids.classicCarbs.visible = false;
+                    solids.classicProtein.visible = false;
+                    
+                    // Show Refinement Solids (based on t)
+                    const showBase = (t > 0.02);
+                    const showTip = (t < 0.98);
+                    
+                    solids.fatBase.visible = showBase;
+                    solids.carbsBase.visible = showBase;
+                    solids.protein.visible = showBase; // The clipped protein
+                    
+                    solids.fatTip.visible = showTip;
+                    solids.carbsTip.visible = showTip;
+                }
+
+                updateLabels(t, isRefining);
+            }
+
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    sliderWrapper.style.display = 'block';
+                    slider.value = 66.666666;
+                } else {
+                    sliderWrapper.style.display = 'none';
+                    // Do not reset slider value here, updatePlanePosition handles the t=0.333 override
+                }
+                updatePlanePosition();
+            });
+
+            slider.addEventListener('input', updatePlanePosition);
+
+            
+            fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_bold.typeface.json', function (font) {
+                document.getElementById('loading').style.display = 'none';
+
+                function createLabel(key, text, pStart, pEnd, colorHex, faceNormal, dist = 0.2) {
+                    const textGeo = new THREE.TextGeometry(text, {
+                        font: font,
+                        size: 0.25,
+                        height: 0.05,
+                        curveSegments: 12,
+                    });
+                    textGeo.center();
+                    
+                    const textMat = new THREE.MeshStandardMaterial({ 
+                        color: colorHex, 
+                        roughness: 0.2, 
+                        metalness: 0.2, 
+                        transparent: true,
+                        opacity: 0.85, 
+                        depthWrite: true,
+                        side: THREE.DoubleSide
+                    });
+
+                    const textMesh = new THREE.Mesh(textGeo, textMat);
+                    textMesh.castShadow = true;
+                    textMesh.receiveShadow = true;
+
+                    // --- ORIENTATION (Local Basis) ---
+                    const edgeLocal = new THREE.Vector3().subVectors(pStart, pEnd).normalize();
+                    const trueUp = new THREE.Vector3(-1, -1, -1).normalize();
+                    const forwardLocal = new THREE.Vector3().crossVectors(edgeLocal, trueUp).normalize();
+                    
+                    if (forwardLocal.dot(faceNormal) < 0) {
+                        forwardLocal.negate();
+                    }
+                    
+                    const rightLocal = new THREE.Vector3().crossVectors(trueUp, forwardLocal).normalize();
+
+                    const baseMat = new THREE.Matrix4();
+                    baseMat.makeBasis(rightLocal, trueUp, forwardLocal);
+                    const baseQuat = new THREE.Quaternion().setFromRotationMatrix(baseMat);
+
+                    pivotGroup.add(textMesh);
+                    
+                    labelMeshes[key] = {
+                        mesh: textMesh,
+                        baseQuat: baseQuat,
+                        dist: dist,
+                        faceNormal: faceNormal 
+                    };
+                    
+                    updateLabelPos(labelMeshes[key], pStart, pEnd, 0.5);
+                }
+
+                const normalYZ = new THREE.Vector3(-1, 0, 0); 
+                const normalXY = new THREE.Vector3(0, 0, -1); 
+                const normalZX = new THREE.Vector3(0, -1, 0); 
+
+                createLabel("protein", "PROTEIN", vLegY, vLegZ, 0x2962FF, normalYZ, 0.2);
+                
+                // CREATE HEDONIC LABEL (Same pos as Protein, Orange)
+                createLabel("hedonic", "HEDONIC", vLegY, vLegZ, 0xFF9800, normalYZ, 0.2);
+
+                createLabel("fat", "FAT", vLegZ, vLegX, 0xFFD600, normalZX);       
+                createLabel("water", "WATER", vLegZ, vLegX, 0x40C4FF, normalZX);   
+                
+                createLabel("carbs", "CARBS", vLegX, vLegY, 0xFF1744, normalXY);   
+                createLabel("fiber", "FIBER", vLegX, vLegY, 0x00E676, normalXY);   
+                
+                // INITIAL STATE:
+                // Slider logical value for "Center": 66.666666
+                // But checkbox is Unchecked by default
+                slider.value = 66.666666;
+                updatePlanePosition();
+
+            }, undefined, function(err) {
+                console.error("Font error", err);
+                document.getElementById('loading').innerText = "Error loading font";
+            });
+
+
+            // --- 7. Controls & Loop ---
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enableKeys = false;
+            
+            controls.maxPolarAngle = Math.PI / 2 + 0.2; 
+
+            // ZOOM LIMITS
+            controls.minDistance = 3; 
+            controls.maxDistance = 30;
+
+            const keyState = {};
+
+            window.addEventListener('keydown', (e) => { keyState[e.code] = true; });
+            window.addEventListener('keyup', (e) => { keyState[e.code] = false; });
+
+            function animate() {
+                if (!document.body.contains(renderer.domElement)) return;
+                requestAnimationFrame(animate);
+
+                const rotSpeed = 0.05;
+                if (keyState.ArrowLeft)  rotateOnAxis(pivotGroup, new THREE.Vector3(0, 1, 0), -rotSpeed);
+                if (keyState.ArrowRight) rotateOnAxis(pivotGroup, new THREE.Vector3(0, 1, 0), rotSpeed);
+                if (keyState.ArrowUp)    rotateOnAxis(pivotGroup, new THREE.Vector3(1, 0, 0), -rotSpeed);
+                if (keyState.ArrowDown)  rotateOnAxis(pivotGroup, new THREE.Vector3(1, 0, 0), rotSpeed);
+
+                // --- CAMERA-DEPENDENT TILT ---
+                const polarAngle = controls.getPolarAngle();
+                
+                let tiltAngle = (Math.PI / 2) - polarAngle;
+                tiltAngle = Math.max(-Math.PI/2, Math.min(Math.PI/2, tiltAngle));
+
+                const tiltQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -tiltAngle);
+
+                Object.values(labelMeshes).forEach(item => {
+                    if (item && item.mesh && item.mesh.visible) {
+                        item.mesh.quaternion.copy(item.baseQuat).multiply(tiltQuat);
+                    }
+                });
+
+
+                // --- CLIPPING PLANE UPDATE ---
+                const normalLocal = new THREE.Vector3(2, -1, -1).normalize();
+                const pointLocal = currentLocalPlanePosition.clone();
+
+                const pointWorld = pointLocal.clone().applyMatrix4(pivotGroup.matrixWorld);
+                const normalWorld = normalLocal.clone().transformDirection(pivotGroup.matrixWorld).normalize();
+
+                globalPlaneTip.setFromNormalAndCoplanarPoint(normalWorld, pointWorld);
+                const normalWorldNeg = normalWorld.clone().negate();
+                globalPlaneBase.setFromNormalAndCoplanarPoint(normalWorldNeg, pointWorld);
+
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            function rotateOnAxis(object, axis, angle) {
+                const q = new THREE.Quaternion();
+                q.setFromAxisAngle(axis, angle);
+                object.quaternion.premultiply(q);
+            }
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            animate();
+        })();
+    </script>
 </body>
 </html>
