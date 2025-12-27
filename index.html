@@ -1044,6 +1044,14 @@
 			const DRAG_SENSITIVITY = 0.00005; 
 			const HEIGHT_SENSITIVITY = 0.005;
 			
+			// GESTURE LOCKING VARIABLES
+			let lockedGesture = null; // Can be: 'rotate', 'height', 'pinch', or null
+			let initialTouchDistance = 0;
+			let gestureStartX = 0;
+			let gestureStartY = 0;
+			let movementAccumulated = 0;
+			const GESTURE_LOCK_THRESHOLD = 15; // pixels of movement before locking
+			
 			// FLOOR LIMIT for Dynamic Camera Logic
 			const FLOOR_Y_LIMIT = 4.2;
 
@@ -1067,6 +1075,13 @@
 					isRightDragging = true;
 					lastPointerX = e.clientX;
 					lastPointerY = e.clientY;
+					
+					// Initialize gesture locking for desktop/trackpad
+					gestureStartX = e.clientX;
+					gestureStartY = e.clientY;
+					lockedGesture = null;
+					movementAccumulated = 0;
+					
 					renderer.domElement.setPointerCapture(e.pointerId);
 				}
 			});
@@ -1076,10 +1091,41 @@
 					const deltaX = e.clientX - lastPointerX;
 					const deltaY = e.clientY - lastPointerY;
 					
-					angularVelocity += deltaX * DRAG_SENSITIVITY;
+					// If gesture not yet locked, determine which gesture to lock to
+					if (lockedGesture === null) {
+						// Accumulate total movement from start
+						const totalDeltaX = Math.abs(e.clientX - gestureStartX);
+						const totalDeltaY = Math.abs(e.clientY - gestureStartY);
+						
+						movementAccumulated = Math.max(totalDeltaX, totalDeltaY);
+						
+						// Once movement exceeds threshold, lock to dominant gesture
+						if (movementAccumulated > GESTURE_LOCK_THRESHOLD) {
+							if (totalDeltaX > totalDeltaY * 1.5) {
+								// Horizontal movement is dominant - rotation
+								lockedGesture = 'rotate';
+							} else if (totalDeltaY > totalDeltaX * 1.5) {
+								// Vertical movement is dominant - height
+								lockedGesture = 'height';
+							}
+							// Note: if movements are too similar, we wait for more movement
+						}
+					}
 					
-					targetHeightFactor -= deltaY * HEIGHT_SENSITIVITY;
-					targetHeightFactor = Math.max(0.01, Math.min(1.0, targetHeightFactor));
+					// Apply only the locked gesture (or all if not yet locked)
+					if (lockedGesture === null) {
+						// Before locking, apply all gestures (but minimal since we're under threshold)
+						angularVelocity += deltaX * DRAG_SENSITIVITY;
+						targetHeightFactor -= deltaY * HEIGHT_SENSITIVITY;
+						targetHeightFactor = Math.max(0.01, Math.min(1.0, targetHeightFactor));
+					} else if (lockedGesture === 'rotate') {
+						// Only apply rotation
+						angularVelocity += deltaX * DRAG_SENSITIVITY;
+					} else if (lockedGesture === 'height') {
+						// Only apply height adjustment
+						targetHeightFactor -= deltaY * HEIGHT_SENSITIVITY;
+						targetHeightFactor = Math.max(0.01, Math.min(1.0, targetHeightFactor));
+					}
 					
 					syncModeButton();
 
@@ -1091,6 +1137,8 @@
 			renderer.domElement.addEventListener('pointerup', (e) => {
 				if (isRightDragging) {
 					isRightDragging = false;
+					lockedGesture = null; // Reset gesture lock
+					movementAccumulated = 0;
 					renderer.domElement.releasePointerCapture(e.pointerId);
 				}
 			});
@@ -1099,8 +1147,23 @@
 			renderer.domElement.addEventListener('touchstart', (e) => {
 				if (e.touches.length === 2) {
 					isRightDragging = true;
+					
+					// Calculate midpoint
 					lastPointerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
 					lastPointerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+					
+					// Store starting position for gesture detection
+					gestureStartX = lastPointerX;
+					gestureStartY = lastPointerY;
+					
+					// Calculate initial distance between touches for pinch detection
+					const dx = e.touches[1].clientX - e.touches[0].clientX;
+					const dy = e.touches[1].clientY - e.touches[0].clientY;
+					initialTouchDistance = Math.sqrt(dx * dx + dy * dy);
+					
+					// Reset gesture lock
+					lockedGesture = null;
+					movementAccumulated = 0;
 				}
 			});
 
@@ -1112,10 +1175,66 @@
 					const deltaX = currentX - lastPointerX;
 					const deltaY = currentY - lastPointerY;
 					
-					angularVelocity += deltaX * DRAG_SENSITIVITY;
+					// Calculate current distance for pinch detection
+					const dx = e.touches[1].clientX - e.touches[0].clientX;
+					const dy = e.touches[1].clientY - e.touches[0].clientY;
+					const currentDistance = Math.sqrt(dx * dx + dy * dy);
+					const pinchDelta = currentDistance - initialTouchDistance;
 					
-					targetHeightFactor -= deltaY * HEIGHT_SENSITIVITY;
-					targetHeightFactor = Math.max(0.01, Math.min(1.0, targetHeightFactor));
+					// If gesture not yet locked, determine which gesture to lock to
+					if (lockedGesture === null) {
+						// Accumulate total movement from start
+						const totalDeltaX = Math.abs(currentX - gestureStartX);
+						const totalDeltaY = Math.abs(currentY - gestureStartY);
+						const totalPinchDelta = Math.abs(pinchDelta);
+						
+						movementAccumulated = Math.max(totalDeltaX, totalDeltaY, totalPinchDelta);
+						
+						// Once movement exceeds threshold, lock to dominant gesture
+						if (movementAccumulated > GESTURE_LOCK_THRESHOLD) {
+							// Determine which gesture is dominant
+							if (totalPinchDelta > totalDeltaX && totalPinchDelta > totalDeltaY) {
+								lockedGesture = 'pinch';
+							} else if (totalDeltaX > totalDeltaY * 1.5) {
+								// Horizontal movement is dominant - rotation
+								lockedGesture = 'rotate';
+							} else if (totalDeltaY > totalDeltaX * 1.5) {
+								// Vertical movement is dominant - height
+								lockedGesture = 'height';
+							}
+							// Note: if movements are too similar, we wait for more movement
+						}
+					}
+					
+					// Apply only the locked gesture (or all if not yet locked)
+					if (lockedGesture === null) {
+						// Before locking, apply all gestures (but minimal since we're under threshold)
+						angularVelocity += deltaX * DRAG_SENSITIVITY;
+						targetHeightFactor -= deltaY * HEIGHT_SENSITIVITY;
+						targetHeightFactor = Math.max(0.01, Math.min(1.0, targetHeightFactor));
+					} else if (lockedGesture === 'rotate') {
+						// Only apply rotation
+						angularVelocity += deltaX * DRAG_SENSITIVITY;
+					} else if (lockedGesture === 'height') {
+						// Only apply height adjustment
+						targetHeightFactor -= deltaY * HEIGHT_SENSITIVITY;
+						targetHeightFactor = Math.max(0.01, Math.min(1.0, targetHeightFactor));
+					} else if (lockedGesture === 'pinch') {
+						// Apply pinch-to-zoom (adjust camera distance via OrbitControls)
+						// Negative because pinching in should zoom in (decrease distance)
+						const zoomSensitivity = 0.01;
+						const currentDist = camera.position.distanceTo(controls.target);
+						const newDist = currentDist - (pinchDelta * zoomSensitivity);
+						const clampedDist = Math.max(controls.minDistance, Math.min(controls.maxDistance, newDist));
+						
+						// Update camera position to new distance
+						const direction = camera.position.clone().sub(controls.target).normalize();
+						camera.position.copy(controls.target).add(direction.multiplyScalar(clampedDist));
+						
+						// Update initial distance for next frame
+						initialTouchDistance = currentDistance;
+					}
+					
 					syncModeButton();
 
 					lastPointerX = currentX;
@@ -1126,6 +1245,8 @@
 			renderer.domElement.addEventListener('touchend', (e) => {
 				if (e.touches.length < 2) {
 					isRightDragging = false;
+					lockedGesture = null; // Reset gesture lock
+					movementAccumulated = 0;
 				}
 			});
 
