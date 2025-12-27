@@ -3,41 +3,35 @@
 <head>
 	
 	<!-- Custom Header Code For naiman.diet -->
-			<meta name="keywords" content="satiety per calorie, satiety, SPC, ted naiman">
-			<meta name="description" content="Satiety Per Calorie:  Eating, solved.  Book by Ted Naiman.">
-			
+	<meta name="keywords" content="satiety per calorie, satiety, SPC, ted naiman">
+	<meta name="description" content="Satiety Per Calorie:  Eating, solved.  Book by Ted Naiman.">
 	
-			
-			<link rel="canonical" href="https://www.naiman.diet" />
-			
-			<!-- Open Graph / Facebook -->
-			<meta property="og:type" content="website">
-			<meta property="og:url" content="https://naiman.diet">
-			<meta property="og:title" content="Satiety Per Calorie">
-			<meta property="og:description" content="Satiety Per Calorie:  Eating, solved.  Book by Ted Naiman.">
-			<meta property="og:image" content="https://naiman.diet/logo.jpg">
-			<meta property="og:site_name" content="Satiety Per Calorie">
-			<meta property="og:image:width" content="1200">
-			<meta property="og:image:height" content="630">
-			<meta property="og:locale" content="en_US"> <!-- adjust this as per your primary audience -->
-			
-			<!-- Twitter -->
-			<meta property="twitter:card" content="summary_large_image">
-			<meta property="twitter:url" content="https://naiman.diet">
-			<meta property="twitter:title" content="Satiety Per Calorie">
-			<meta property="twitter:description" content="Satiety Per Calorie:  Eating, solved.  Book by Ted Naiman.">
-			<meta property="twitter:image" content="https://naiman.diet/logo.jpg">
-			
-			<meta name="author" content="Ted Naiman">
-			
-			<title>Satiety Per Calorie</title>
-			<meta charset="utf-8" />
-			<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<link rel="canonical" href="https://www.naiman.diet" />
 	
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://naiman.diet">
+	<meta property="og:title" content="Satiety Per Calorie">
+	<meta property="og:description" content="Satiety Per Calorie:  Eating, solved.  Book by Ted Naiman.">
+	<meta property="og:image" content="https://naiman.diet/logo.jpg">
+	<meta property="og:site_name" content="Satiety Per Calorie">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta property="og:locale" content="en_US"> 
 	
-			
-	<!-- code snippet for header -->
+	<!-- Twitter -->
+	<meta property="twitter:card" content="summary_large_image">
+	<meta property="twitter:url" content="https://naiman.diet">
+	<meta property="twitter:title" content="Satiety Per Calorie">
+	<meta property="twitter:description" content="Satiety Per Calorie:  Eating, solved.  Book by Ted Naiman.">
+	<meta property="twitter:image" content="https://naiman.diet/logo.jpg">
 	
+	<meta name="author" content="Ted Naiman">
+	
+	<title>Satiety Per Calorie</title>
+	<meta charset="utf-8" />
+	
+	<!-- Note: Relative favicon paths may not resolve in this environment -->
 	<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 	<link rel="shortcut icon" href="/favicon.ico" />
@@ -46,7 +40,7 @@
 	
 	
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 	<title>Trirectangular Tetrahedron Viewer</title>
 	
 	<!-- Import Inter Font -->
@@ -81,7 +75,10 @@
 			z-index: 10;
 		}
 		.slider-container {
-			background: rgba(30, 30, 30, 0.8);
+			/* UPDATED: Darker opacity (0.85) and removed hover effect */
+			background: rgba(20, 20, 20, 0.6); 
+			opacity: 0.85;
+			
 			padding: 15px 30px;
 			border-radius: 30px;
 			display: flex;
@@ -91,12 +88,6 @@
 			box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 			border: 1px solid rgba(255,255,255,0.1);
 			transition: all 0.3s ease;
-		}
-		
-		/* Glow Effect for Snapped State */
-		.slider-container.snapped {
-			box-shadow: 0 0 25px rgba(255, 152, 0, 0.4), 0 10px 30px rgba(0,0,0,0.5);
-			border-color: rgba(255, 152, 0, 0.6);
 		}
 		
 		/* Labels Row */
@@ -203,7 +194,7 @@
 			height: 8px;
 			background-color: #000;
 			border: 1px solid #444;
-			transform: translateY(16px); /* Move below the thumb */
+			transform: translateY(-16px); /* Move below the thumb */
 			transition: all 0.2s ease;
 			border-radius: 2px;
 			/* Ensure tick doesn't shrink in flex */
@@ -219,7 +210,7 @@
 			/* width: 3px; */
 			
 			/* Use Scale to grow visually from center without affecting layout positions */
-			transform: translateY(16px) scale(1.5, 1.4);
+			transform: translateY(-16px) scale(1.5, 1.4);
 		}
 
 		/* Checkbox Styling */
@@ -244,11 +235,107 @@
 			text-transform: uppercase;
 			cursor: pointer;
 		}
+		
+		/* Logo button in top-left corner */
+		#logo-button {
+		  position: fixed;
+		  top: 20px;
+		  left: 20px;
+		  z-index: 200;
+		  width: 60px;
+		  height: 60px;
+		  cursor: pointer;
+		  opacity: 0.75;
+		  transition: opacity 0.3s ease, transform 0.3s ease, filter 0.3s ease;
+		  pointer-events: auto;
+		  border-radius: 8px;
+		  padding: 8px;
+		  background: rgba(20, 20, 20, 0.6);
+		 // backdrop-filter: blur(10px);
+		  border: 1px solid rgba(255, 255, 255, 0.1);
+		  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+		}
+		
+		#logo-button:hover {
+		  opacity: 1;
+		  transform: scale(1.05);
+		  filter: drop-shadow(0 0 8px rgba(125, 211, 252, 0.4));
+		  border-color: rgba(125, 211, 252, 0.3);
+		}
+		
+		#logo-button img {
+		  width: 100%;
+		  height: 100%;
+		  object-fit: contain;
+		  display: block;
+		}
+
+		/* --- NEW 2D/3D TOGGLE BUTTON --- */
+		#mode-toggle {
+			position: fixed;
+			top: 20px;
+			right: 20px;
+			z-index: 200;
+			
+			/* UPDATED to match Logo Button opacity/color */
+			background: rgba(20, 20, 20, 0.6);
+			opacity: 0.75;
+			
+			backdrop-filter: blur(10px);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			color: #fff;
+			padding: 12px 24px;
+			border-radius: 30px;
+			font-family: 'Inter', sans-serif;
+			font-size: 0.85rem;
+			font-weight: 700;
+			cursor: pointer;
+			text-transform: uppercase;
+			letter-spacing: 1.5px;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			user-select: none;
+			-webkit-tap-highlight-color: transparent;
+		}
+
+		/* Only apply HOVER styles on devices that support hovering (Mouse/Desktop) */
+		@media (hover: hover) {
+			#mode-toggle:hover {
+				opacity: 1; /* Brighten on hover */
+				/* REMOVED: background: rgba(255, 255, 255, 0.1); */
+				/* Now it keeps the dark background set in #mode-toggle */
+				
+				color: #fff;
+				border-color: rgba(255, 255, 255, 0.5);
+				transform: scale(1.05);
+			}
+		}
+		
+		/* Apply the visual glow when TAPPING (Active) on all devices */
+		#mode-toggle:active {
+			opacity: 1;
+			/* REMOVED: background change here too for consistency */
+			color: #fff;
+			border-color: rgba(255, 255, 255, 0.5);
+			transform: scale(0.95); /* Shrinks slightly for tactile click feel */
+		}
+
 	</style>
 </head>
 <body>
 	
 	<div id="loading">Loading Assets...</div>
+	
+	<!-- Logo button in top-left corner -->
+	  <a id="logo-button" href="https://tednaiman.com">
+		<img src="https://naiman.diet/SPCICON.PNG" alt="Satiety Per Calorie Icon Logo" onerror="this.style.display='none'; document.getElementById('logo-button').innerHTML='<span style=\'color:white; font-size:24px; display:flex; justify-content:center; align-items:center; height:100%;\'>SPC</span>'" />
+	  </a>
+
+	<!-- New 2D/3D Toggle Button -->
+	<button id="mode-toggle">2D VIEW</button>
 
 	<!-- Slider Control -->
 	<div id="controls">
@@ -308,14 +395,50 @@
 			scene.fog = new THREE.Fog(bgColor, 15, 40);
 
 			const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-			camera.position.set(6, 5, 8); 
+			
+			// --- CAMERA CONFIGURATION ---
+			const START_RADIUS = 11.2;  // Distance from center
+			
+			// Polar Angle: 0 = Top Down, 90 (PI/2) = Horizon, 180 (PI) = Bottom Up
+			const START_POLAR_ANGLE = THREE.MathUtils.degToRad(23.4); 
+			
+			// Azimuth Angle: Rotation around the equator
+			const START_AZIMUTH_ANGLE = Math.atan2(6, 8); 
+
+			// NEW: Vertical Shift as Percentage of Screen Height (0.1 = 10% shift up)
+			// This moves the visual center UP without breaking the zoom/orbit center
+			const VIEWPORT_OFFSET_PERCENT = 0.1; 
+
+			// Calculate Cartesian Position (x, y, z)
+			// Resetting target to 0,0,0 for correct physics
+			camera.position.x = START_RADIUS * Math.sin(START_POLAR_ANGLE) * Math.sin(START_AZIMUTH_ANGLE);
+			camera.position.y = START_RADIUS * Math.cos(START_POLAR_ANGLE);
+			camera.position.z = START_RADIUS * Math.sin(START_POLAR_ANGLE) * Math.cos(START_AZIMUTH_ANGLE);
+
 
 			const renderer = new THREE.WebGLRenderer({ antialias: true });
 			renderer.localClippingEnabled = true; 
 			renderer.shadowMap.enabled = true; 
-			renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+			
+			// UPDATED: Switch to PCFShadowMap (Standard) to allow for Sharp Shadows
+			// PCFSoftShadowMap forces a blur, whereas PCFShadowMap respects radius 0.
+			renderer.shadowMap.type = THREE.PCFShadowMap; 
+			
 			renderer.setSize(window.innerWidth, window.innerHeight);
 			renderer.setPixelRatio(window.devicePixelRatio);
+			
+			// Apply Initial View Offset (Lens Shift)
+			function updateCameraOffset() {
+				const fullWidth = window.innerWidth;
+				const fullHeight = window.innerHeight;
+				const offsetY = fullHeight * VIEWPORT_OFFSET_PERCENT;
+				
+				// setViewOffset( fullWidth, fullHeight, x, y, width, height )
+				// We shift the 'window' down (positive Y) which forces the center UP relative to the frame
+				camera.setViewOffset(fullWidth, fullHeight, 0, offsetY, fullWidth, fullHeight);
+				camera.updateProjectionMatrix();
+			}
+			updateCameraOffset();
 			
 			renderer.domElement.setAttribute('tabindex', '0');
 			renderer.domElement.style.outline = 'none'; 
@@ -325,6 +448,16 @@
 			renderer.domElement.addEventListener('mouseover', () => renderer.domElement.focus());
 
 			// --- 2. Lighting ---
+			
+			// LIGHTING CONTROLS
+			// Penumbra: 0.0 = Hard Edge, 1.0 = Soft/Diffused Edge
+			const KEY_LIGHT_PENUMBRA = 1.0; 
+			
+			// Shadow Softness: 0 = Razor Sharp, 1+ = Softer
+			// Now that we use PCFShadowMap, 0 will actually be sharp.
+			const SHADOW_SOFTNESS = 6;
+
+
 			const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
 			hemiLight.position.set(0, 20, 0);
 			scene.add(hemiLight);
@@ -332,14 +465,23 @@
 			const spotLight = new THREE.SpotLight(0xffffff, 1.2);
 			spotLight.position.set(0, 20, 0); 
 			spotLight.angle = Math.PI / 6;
-			spotLight.penumbra = 1.0; 
+			
+			// Apply Penumbra (Softness)
+			spotLight.penumbra = KEY_LIGHT_PENUMBRA; 
+			
 			spotLight.decay = 2;
 			spotLight.distance = 100;
 			spotLight.castShadow = true;
-			spotLight.shadow.mapSize.width = 1024; 
-			spotLight.shadow.mapSize.height = 1024;
+			
+			// UPDATED: Increased Map Size to 4096 (4K) for Ultra-HD Shadows
+			spotLight.shadow.mapSize.width = 4096; 
+			spotLight.shadow.mapSize.height = 4096;
+			
 			spotLight.shadow.bias = -0.0001;
-			spotLight.shadow.radius = 5; 
+			
+			// Apply Shadow Softness
+			spotLight.shadow.radius = SHADOW_SOFTNESS;
+			
 			scene.add(spotLight);
 
 			const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
@@ -354,6 +496,19 @@
 			floor.receiveShadow = true; 
 			scene.add(floor);
 
+			// --- GRID HELPER (Graph Paper Motif) ---
+			// Size: 200, Divisions: 100 (creates 2x2 unit squares)
+			const gridHelper = new THREE.GridHelper(200, 100, 0x000000, 0x000000);
+			gridHelper.position.y = -4.49; // Slightly above floor to prevent z-fighting
+			gridHelper.material.opacity = 0.15; // Very faint opacity
+			gridHelper.material.transparent = true;
+			
+			// ALIGNMENT FIX:
+			// Sync grid rotation to Camera Azimuth so lines appear horizontal
+			gridHelper.rotation.y = START_AZIMUTH_ANGLE;
+			
+			scene.add(gridHelper);
+
 
 			// --- 3. Asset Loading ---
 			const fontLoader = new THREE.FontLoader();
@@ -363,7 +518,8 @@
 			const offset = s / 4; 
 			
 			// Height Factor for Dynamic Flattening
-			let heightFactor = 0.5;
+			let heightFactor = 0.5; // Current visual height
+			let targetHeightFactor = 0.5; // Target for animation
 
 			const vApex = new THREE.Vector3(0, 0, 0); 
 			const vLegX = new THREE.Vector3(s, 0, 0); 
@@ -468,10 +624,20 @@
 			pivotGroup.add(solids.classicFat);
 			pivotGroup.add(solids.classicCarbs);
 
-			// Orient Vertex Up
+			// Orient Vertex Up (Standard starting pose)
 			const cornerDirection = new THREE.Vector3(-1, -1, -1).normalize();
 			const upDirection = new THREE.Vector3(0, 1, 0);
 			pivotGroup.quaternion.setFromUnitVectors(cornerDirection, upDirection);
+
+			// --- OPTIONAL: ADJUST STARTING ROTATION ---
+			// Change this value to rotate the object on startup.
+			// 52 deg = Yellow (Fat). 52 + 120 = 172 deg = Blue (Protein).
+			const INITIAL_ROTATION_OFFSET = THREE.MathUtils.degToRad(-22); 
+			
+			// CORRECTED: Apply rotation around the WORLD Vertical Axis (0,1,0)
+			const initialRotQ = new THREE.Quaternion();
+			initialRotQ.setFromAxisAngle(new THREE.Vector3(0, 1, 0), INITIAL_ROTATION_OFFSET);
+			pivotGroup.quaternion.premultiply(initialRotQ);
 
 
 			// --- 5. Bisection Plane Mesh ---
@@ -631,7 +797,8 @@
 				});
 
 				// Scale the Bisection Plane Height to match the Tetrahedron Height
-				bisectionPlane.scale.y = heightFactor;
+				// Avoid scale 0 error
+				bisectionPlane.scale.y = Math.max(0.001, heightFactor);
 
 				// REMOVED: Dynamic Face Normal Recalculation for Labels
 				// Labels will now stay in their original "Vertex Up" orientation/position.
@@ -678,14 +845,7 @@
 					currentLocalPlanePosition.copy(meshPos);
 				}
 				
-				// Apply Snapped Visuals (Container Glow)
-				if (isSnapped) {
-					sliderContainer.classList.add('snapped');
-				} else {
-					sliderContainer.classList.remove('snapped');
-				}
-
-				// Apply Tick Glow
+				// Apply Tick Glow (Container Glow Removed)
 				ticks.forEach(tick => {
 					if (isSnapped && parseFloat(tick.dataset.val) === snappedValue) {
 						tick.classList.add('active');
@@ -848,48 +1008,207 @@
 
 			// --- 7. Controls & Loop ---
 			const controls = new THREE.OrbitControls(camera, renderer.domElement);
+			
+			// Reset target to Center of Object (0,0,0) so Zoom/Spin works perfectly
+			controls.target.set(0, 0, 0);
+			
 			controls.enableDamping = true;
 			controls.dampingFactor = 0.05;
 			controls.enableKeys = false;
 			
-			// Disable Panning
+			// Disable Panning to keep object centered
 			controls.enablePan = false;
 
-			controls.maxPolarAngle = Math.PI / 2 + 0.2; 
+			// UNMAP Right Click from OrbitControls so we can use it for Object Rotation
+			controls.mouseButtons = {
+				LEFT: THREE.MOUSE.ROTATE,
+				MIDDLE: THREE.MOUSE.DOLLY,
+				RIGHT: null 
+			};
 
 			// ZOOM LIMITS
 			controls.minDistance = 3; 
 			controls.maxDistance = 30;
 
 			const keyState = {};
+			
+			// --- PHYSICS VARIABLES ---
+			let angularVelocity = 0;
+			const ROTATION_ACCEL = 0.000009; 
+			const ROTATION_FRICTION = 0.9998; 
+			const MAX_VELOCITY = 0.003; 
+			
+			// INTERACTION VARIABLES
+			let isRightDragging = false;
+			let lastPointerX = 0;
+			let lastPointerY = 0;
+			const DRAG_SENSITIVITY = 0.00005; 
+			const HEIGHT_SENSITIVITY = 0.005;
+			
+			// FLOOR LIMIT for Dynamic Camera Logic
+			const FLOOR_Y_LIMIT = 4.2;
+
+			// 1. Prevent Context Menu on Right Click
+			renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+			// 2. POINTER EVENTS
+			function syncModeButton() {
+				const modeToggleBtn = document.getElementById('mode-toggle');
+				if (targetHeightFactor <= 0.05) { 
+					modeToggleBtn.innerText = "3D VIEW"; 
+					modeToggleBtn.style.color = "#FF9800";
+				} else {
+					modeToggleBtn.innerText = "2D VIEW"; 
+					modeToggleBtn.style.color = "#fff";
+				}
+			}
+
+			renderer.domElement.addEventListener('pointerdown', (e) => {
+				if (e.button === 2 || e.pointerType === 'touch' && e.isPrimary === false) {
+					isRightDragging = true;
+					lastPointerX = e.clientX;
+					lastPointerY = e.clientY;
+					renderer.domElement.setPointerCapture(e.pointerId);
+				}
+			});
+
+			renderer.domElement.addEventListener('pointermove', (e) => {
+				if (isRightDragging) {
+					const deltaX = e.clientX - lastPointerX;
+					const deltaY = e.clientY - lastPointerY;
+					
+					angularVelocity += deltaX * DRAG_SENSITIVITY;
+					
+					targetHeightFactor -= deltaY * HEIGHT_SENSITIVITY;
+					targetHeightFactor = Math.max(0.01, Math.min(1.0, targetHeightFactor));
+					
+					syncModeButton();
+
+					lastPointerX = e.clientX;
+					lastPointerY = e.clientY;
+				}
+			});
+
+			renderer.domElement.addEventListener('pointerup', (e) => {
+				if (isRightDragging) {
+					isRightDragging = false;
+					renderer.domElement.releasePointerCapture(e.pointerId);
+				}
+			});
+
+			// 3. Touch Events
+			renderer.domElement.addEventListener('touchstart', (e) => {
+				if (e.touches.length === 2) {
+					isRightDragging = true;
+					lastPointerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+					lastPointerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+				}
+			});
+
+			renderer.domElement.addEventListener('touchmove', (e) => {
+				if (isRightDragging && e.touches.length === 2) {
+					const currentX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+					const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+					
+					const deltaX = currentX - lastPointerX;
+					const deltaY = currentY - lastPointerY;
+					
+					angularVelocity += deltaX * DRAG_SENSITIVITY;
+					
+					targetHeightFactor -= deltaY * HEIGHT_SENSITIVITY;
+					targetHeightFactor = Math.max(0.01, Math.min(1.0, targetHeightFactor));
+					syncModeButton();
+
+					lastPointerX = currentX;
+					lastPointerY = currentY;
+				}
+			});
+
+			renderer.domElement.addEventListener('touchend', (e) => {
+				if (e.touches.length < 2) {
+					isRightDragging = false;
+				}
+			});
+
 
 			window.addEventListener('keydown', (e) => { 
 				keyState[e.code] = true; 
-				
-				// Height Control Logic
-				// Increased step size from 0.02 to 0.1 (5x faster)
-				if (e.code === 'ArrowUp') {
-					heightFactor = Math.min(1.0, heightFactor + 0.1);
-					updateGeometry();
-				}
-				if (e.code === 'ArrowDown') {
-					heightFactor = Math.max(0.01, heightFactor - 0.1);
-					updateGeometry();
-				}
+				if (e.code === 'ArrowUp') targetHeightFactor = Math.min(1.0, targetHeightFactor + 0.1);
+				if (e.code === 'ArrowDown') targetHeightFactor = Math.max(0.01, targetHeightFactor - 0.1);
+				syncModeButton();
 			});
 			window.addEventListener('keyup', (e) => { keyState[e.code] = false; });
+			
+			const modeToggleBtn = document.getElementById('mode-toggle');
+			modeToggleBtn.addEventListener('click', () => {
+				if (targetHeightFactor > 0.05) {
+					targetHeightFactor = 0.01; 
+					modeToggleBtn.innerText = "3D VIEW"; 
+					modeToggleBtn.style.color = "#FF9800";
+				} else {
+					targetHeightFactor = 0.5; 
+					modeToggleBtn.innerText = "2D VIEW"; 
+					modeToggleBtn.style.color = "#fff";
+				}
+			});
+
 
 			function animate() {
 				if (!document.body.contains(renderer.domElement)) return;
 				requestAnimationFrame(animate);
 
-				const rotSpeed = 0.05;
-				if (keyState.ArrowLeft)  rotateOnAxis(pivotGroup, new THREE.Vector3(0, 1, 0), -rotSpeed);
-				if (keyState.ArrowRight) rotateOnAxis(pivotGroup, new THREE.Vector3(0, 1, 0), rotSpeed);
-				// Removed Up/Down rotation logic to allow Height Control
+				// --- DYNAMIC CAMERA LIMITS (Bidirectional Floor Guard) ---
+				if (controls) {
+					const currentDist = camera.position.distanceTo(controls.target);
+					const currentPolar = controls.getPolarAngle();
+					
+					// Safety check
+					const dist = Math.max(0.1, currentDist);
 
-				// --- DYNAMIC RENDER ORDER BASED ON CAMERA DISTANCE ---
-				// Calculate center points for each solid in world space
+					// 1. RADIUS LIMITS ROTATION (Prevent clipping when orbiting)
+					if (dist < FLOOR_Y_LIMIT) {
+						controls.maxPolarAngle = Math.PI; // Allow full underneath rotation
+					} else {
+						// Calculate the angle where the sphere hits the floor
+						let ratio = -FLOOR_Y_LIMIT / dist;
+						ratio = Math.max(-1, Math.min(1, ratio));
+						controls.maxPolarAngle = Math.acos(ratio);
+					}
+
+					// 2. ROTATION LIMITS ZOOM (Prevent clipping when zooming out)
+					// If we are looking from below (angle > 90 deg), cap the max zoom distance
+					if (currentPolar > Math.PI / 2) {
+						// Geometric Limit: r_max = -FloorY / cos(theta)
+						// Note: cos(theta) is negative here, so the result is positive
+						// We use a tiny epsilon (0.001) to prevent divide-by-zero flickering at exact 90 deg
+						const cosTheta = Math.min(-0.001, Math.cos(currentPolar));
+						const maxAllowedDistance = -FLOOR_Y_LIMIT / cosTheta;
+						
+						// Apply limit, but never exceed the global max (30)
+						controls.maxDistance = Math.min(30, maxAllowedDistance);
+					} else {
+						// If looking from above, restore full zoom capability
+						controls.maxDistance = 30;
+					}
+				}
+
+				// --- INERTIA LOGIC ---
+				if (keyState.ArrowLeft)  angularVelocity -= ROTATION_ACCEL;
+				if (keyState.ArrowRight) angularVelocity += ROTATION_ACCEL;
+				
+				if (angularVelocity > MAX_VELOCITY) angularVelocity = MAX_VELOCITY;
+				if (angularVelocity < -MAX_VELOCITY) angularVelocity = -MAX_VELOCITY;
+
+				rotateOnAxis(pivotGroup, new THREE.Vector3(0, 1, 0), angularVelocity);
+				angularVelocity *= ROTATION_FRICTION;
+				
+				const diff = targetHeightFactor - heightFactor;
+				if (Math.abs(diff) > 0.001) {
+					heightFactor += diff * 0.1;
+					updateGeometry();
+				}
+
+				// --- DYNAMIC RENDER ORDER ---
 				const getCenterWorld = (mesh) => {
 					const box = new THREE.Box3().setFromObject(mesh);
 					const center = new THREE.Vector3();
@@ -897,53 +1216,26 @@
 					return center;
 				};
 				
-				// Create array of solids with their distances
 				const solidDistances = [];
-				
-				// Check which mode we're in and sort accordingly
 				const isRefining = checkbox.checked;
 				
 				if (isRefining) {
-					// Refinement mode solids
-					if (solids.protein.visible) {
-						solidDistances.push({ mesh: solids.protein, dist: camera.position.distanceTo(getCenterWorld(solids.protein)) });
-					}
-					if (solids.fatTip.visible) {
-						solidDistances.push({ mesh: solids.fatTip, dist: camera.position.distanceTo(getCenterWorld(solids.fatTip)) });
-					}
-					if (solids.fatBase.visible) {
-						solidDistances.push({ mesh: solids.fatBase, dist: camera.position.distanceTo(getCenterWorld(solids.fatBase)) });
-					}
-					if (solids.carbsTip.visible) {
-						solidDistances.push({ mesh: solids.carbsTip, dist: camera.position.distanceTo(getCenterWorld(solids.carbsTip)) });
-					}
-					if (solids.carbsBase.visible) {
-						solidDistances.push({ mesh: solids.carbsBase, dist: camera.position.distanceTo(getCenterWorld(solids.carbsBase)) });
-					}
+					if (solids.protein.visible) solidDistances.push({ mesh: solids.protein, dist: camera.position.distanceTo(getCenterWorld(solids.protein)) });
+					if (solids.fatTip.visible) solidDistances.push({ mesh: solids.fatTip, dist: camera.position.distanceTo(getCenterWorld(solids.fatTip)) });
+					if (solids.fatBase.visible) solidDistances.push({ mesh: solids.fatBase, dist: camera.position.distanceTo(getCenterWorld(solids.fatBase)) });
+					if (solids.carbsTip.visible) solidDistances.push({ mesh: solids.carbsTip, dist: camera.position.distanceTo(getCenterWorld(solids.carbsTip)) });
+					if (solids.carbsBase.visible) solidDistances.push({ mesh: solids.carbsBase, dist: camera.position.distanceTo(getCenterWorld(solids.carbsBase)) });
 				} else {
-					// Classic mode solids
-					if (solids.classicProtein.visible) {
-						solidDistances.push({ mesh: solids.classicProtein, dist: camera.position.distanceTo(getCenterWorld(solids.classicProtein)) });
-					}
-					if (solids.classicFat.visible) {
-						solidDistances.push({ mesh: solids.classicFat, dist: camera.position.distanceTo(getCenterWorld(solids.classicFat)) });
-					}
-					if (solids.classicCarbs.visible) {
-						solidDistances.push({ mesh: solids.classicCarbs, dist: camera.position.distanceTo(getCenterWorld(solids.classicCarbs)) });
-					}
+					if (solids.classicProtein.visible) solidDistances.push({ mesh: solids.classicProtein, dist: camera.position.distanceTo(getCenterWorld(solids.classicProtein)) });
+					if (solids.classicFat.visible) solidDistances.push({ mesh: solids.classicFat, dist: camera.position.distanceTo(getCenterWorld(solids.classicFat)) });
+					if (solids.classicCarbs.visible) solidDistances.push({ mesh: solids.classicCarbs, dist: camera.position.distanceTo(getCenterWorld(solids.classicCarbs)) });
 				}
 				
-				// Sort by distance (furthest first)
 				solidDistances.sort((a, b) => b.dist - a.dist);
-				
-				// Assign renderOrder (furthest = lowest number = renders first)
-				solidDistances.forEach((item, index) => {
-					item.mesh.renderOrder = index;
-				});
+				solidDistances.forEach((item, index) => { item.mesh.renderOrder = index; });
 
 				// --- CAMERA-DEPENDENT TILT ---
 				const polarAngle = controls.getPolarAngle();
-				
 				let tiltAngle = (Math.PI / 2) - polarAngle;
 				tiltAngle = Math.max(-Math.PI/2, Math.min(Math.PI/2, tiltAngle));
 
@@ -955,11 +1247,9 @@
 					}
 				});
 
-
 				// --- CLIPPING PLANE UPDATE ---
 				const normalLocal = new THREE.Vector3(2, -1, -1).normalize();
 				const pointLocal = currentLocalPlanePosition.clone();
-
 				const pointWorld = pointLocal.clone().applyMatrix4(pivotGroup.matrixWorld);
 				const normalWorld = normalLocal.clone().transformDirection(pivotGroup.matrixWorld).normalize();
 
@@ -979,6 +1269,7 @@
 
 			window.addEventListener('resize', () => {
 				camera.aspect = window.innerWidth / window.innerHeight;
+				updateCameraOffset();
 				camera.updateProjectionMatrix();
 				renderer.setSize(window.innerWidth, window.innerHeight);
 			});
