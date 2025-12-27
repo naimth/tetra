@@ -1188,21 +1188,29 @@
 						const totalDeltaY = Math.abs(currentY - gestureStartY);
 						const totalPinchDelta = Math.abs(pinchDelta);
 						
-						movementAccumulated = Math.max(totalDeltaX, totalDeltaY, totalPinchDelta);
+						// For midpoint movement, use the maximum of X or Y
+						const totalMidpointMovement = Math.max(totalDeltaX, totalDeltaY);
+						
+						movementAccumulated = Math.max(totalMidpointMovement, totalPinchDelta * 0.3);
 						
 						// Once movement exceeds threshold, lock to dominant gesture
 						if (movementAccumulated > GESTURE_LOCK_THRESHOLD) {
-							// Determine which gesture is dominant
-							if (totalPinchDelta > totalDeltaX && totalPinchDelta > totalDeltaY) {
+							// PRIORITY: Midpoint movement (rotate/height) wins over pinch
+							// unless pinch is happening with minimal midpoint movement
+							
+							// First check if there's significant midpoint movement
+							if (totalMidpointMovement > GESTURE_LOCK_THRESHOLD * 0.7) {
+								// Lock to rotation or height based on direction
+								if (totalDeltaX > totalDeltaY * 1.5) {
+									lockedGesture = 'rotate';
+								} else if (totalDeltaY > totalDeltaX * 1.5) {
+									lockedGesture = 'height';
+								}
+								// If both X and Y are similar, wait for more movement
+							} else if (totalPinchDelta > GESTURE_LOCK_THRESHOLD * 1.5) {
+								// Only lock to pinch if minimal midpoint movement but clear pinch
 								lockedGesture = 'pinch';
-							} else if (totalDeltaX > totalDeltaY * 1.5) {
-								// Horizontal movement is dominant - rotation
-								lockedGesture = 'rotate';
-							} else if (totalDeltaY > totalDeltaX * 1.5) {
-								// Vertical movement is dominant - height
-								lockedGesture = 'height';
 							}
-							// Note: if movements are too similar, we wait for more movement
 						}
 					}
 					
